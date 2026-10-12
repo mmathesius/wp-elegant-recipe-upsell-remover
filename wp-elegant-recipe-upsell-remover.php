@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WordPress Elegant Recipe Theme Upsell Panel Remover
  * Plugin URI:  https://yourwebsite.com
- * Description: Automatically hides the premium upsell panel (.section-action) from the free version of the Elegant Recipe Blog Theme and adds helpful theme documentation.
- * Version:     1.1.0
+ * Description: Automatically hides the premium upsell panel (.section-action) from the free version of the Elegant Recipe Blog Theme.
+ * Version:     1.2.0
  * Author:      Your Name
  * License:     GPL2
  */
@@ -26,24 +26,41 @@ function wperp_hide_upsell_panel() {
 add_action( 'wp_head', 'wperp_hide_upsell_panel' );
 
 /**
- * 2. Add a documentation link under the Appearance menu
+ * 2. Register the hidden documentation page so it has a valid admin URL
  */
-function wperp_add_doc_menu() {
-    add_theme_page(
+function wperp_register_doc_page() {
+    add_submenu_page(
+        null,                                       // Set parent to null to hide it from the sidebar menus
         'Theme Upsell Remover Documentation',       // Page title
-        'Upsell Remover Docs',                       // Menu title in sidebar
+        'Upsell Remover Docs',                       // Menu title
         'manage_options',                            // Required capability
         'wp-elegant-recipe-upsell-remover-docs',     // Menu slug
         'wperp_render_doc_page'                     // Callback function to render HTML
     );
 }
-add_action( 'admin_menu', 'wperp_add_doc_menu' );
+add_action( 'admin_menu', 'wperp_register_doc_page' );
 
 /**
- * 3. Render the documentation page HTML
+ * 3. Add the "Documentation" link to the Plugin card row
+ */
+function wperp_add_action_links( $links ) {
+    // Generate the URL pointing to our hidden admin page
+    $doc_url = admin_url( 'admin.php?page=wp-elegant-recipe-upsell-remover-docs' );
+    
+    // Create the HTML link anchor
+    $doc_link = '<a href="' . esc_url( $doc_url ) . '" style="font-weight: bold;">Documentation</a>';
+    
+    // Add it to the front of the existing action links array
+    array_unshift( $links, $doc_link );
+    return $links;
+}
+// Dynamic hook structure: plugin_action_links_{plugin_folder_name/plugin_file_name.php}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'wperp_add_action_links' );
+
+/**
+ * 4. Render the documentation page HTML
  */
 function wperp_render_doc_page() {
-    // Check user capabilities
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
     }
@@ -82,7 +99,7 @@ function wperp_render_doc_page() {
         </table>
 
         <p style="margin-top: 25px;">
-            <a href="<?php echo admin_url('plugins.php'); ?>" class="button button-secondary">Manage Plugins</a>
+            <a href="<?php echo admin_url('plugins.php'); ?>" class="button button-secondary">← Back to Plugins</a>
         </p>
     </div>
     <?php
